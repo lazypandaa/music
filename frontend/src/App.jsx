@@ -60,6 +60,8 @@ const GlobalStyles = () => (
       padding: 16px 32px; background-color: rgba(0,0,0,0.5); position: sticky;
       top: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center;
     }
+    .header-left { display: flex; gap: 10px; flex-grow: 1; max-width: 400px; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
     .search-form input {
       width: 100%; padding: 12px 16px; border: none; border-radius: 50px;
       background-color: var(--hover-color); color: var(--primary-text-color); font-size: 0.9rem;
@@ -68,6 +70,9 @@ const GlobalStyles = () => (
         background-color: #333; color: white; padding: 8px 16px; border-radius: 20px;
         display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.9rem;
     }
+    .icon-button { background: none; border: none; color: var(--secondary-text-color); cursor: pointer; position: relative; }
+    .icon-button:hover { color: white; }
+    .icon-button.active { color: var(--accent-color); }
     .track-list { list-style: none; }
     .track-header, .track-item {
       display: grid; grid-template-columns: 40px 4fr 3fr 2fr 100px; gap: 16px;
@@ -131,39 +136,58 @@ const GlobalStyles = () => (
     .modal-content .switch-auth { margin-top: 20px; color: var(--secondary-text-color); font-size: 0.9rem; }
     .modal-content .switch-auth span { color: white; cursor: pointer; text-decoration: underline; }
     .modal-error { color: #ff4d4d; margin-top: 15px; font-size: 0.9rem; }
-    .session-info { margin-top: 15px; background: #333; padding: 10px; border-radius: 5px; }
     
     /* Chat Panel Styles */
     .chat-panel {
-      position: absolute;
+      position: fixed;
       top: 0; right: 0; bottom: 0;
-      width: 300px;
+      width: 320px;
       background-color: #000;
       border-left: 1px solid #282828;
-      z-index: 10;
+      z-index: 150;
       display: flex;
       flex-direction: column;
-      padding: 16px;
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
     }
-    .chat-panel h3 { margin-bottom: 10px; }
+    .chat-panel.visible {
+      transform: translateX(0);
+    }
+    .chat-header {
+      padding: 16px;
+      border-bottom: 1px solid #282828;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-header h3 { margin: 0; font-size: 1rem; }
+    .chat-header .end-session-btn { background: #333; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; }
     .chat-messages {
       flex-grow: 1;
       overflow-y: auto;
-      margin-bottom: 10px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
     }
     .chat-message {
         background-color: var(--surface-color);
         padding: 8px 12px;
         border-radius: 12px;
         max-width: 90%;
+        align-self: flex-start;
     }
-    .chat-message.system { background: none; color: var(--secondary-text-color); font-style: italic; font-size: 0.8rem; }
+     .chat-message.mine {
+        align-self: flex-end;
+        background-color: var(--accent-color);
+        color: black;
+     }
+    .chat-message.system { background: none; color: var(--secondary-text-color); font-style: italic; font-size: 0.8rem; align-self: center; }
     .chat-message .user { font-weight: bold; color: var(--accent-color); display: block; font-size: 0.8rem; }
-    .chat-input { display: flex; gap: 8px; }
-    .chat-input input { flex-grow: 1; padding: 10px; border-radius: 20px; border: none; background-color: var(--hover-color); color: white; }
+    .chat-message.mine .user { color: #111; }
+    .chat-input-form { display: flex; gap: 8px; padding: 16px; border-top: 1px solid #282828; }
+    .chat-input-form input { flex-grow: 1; padding: 10px; border-radius: 20px; border: none; background-color: var(--hover-color); color: white; }
+    .chat-input-form button { background: none; border: none; color: var(--accent-color); cursor: pointer; }
   `}</style>
 );
 // --- SVG Icons ---
@@ -175,6 +199,8 @@ const LibraryIcon = () => <svg role="img" height="24" width="24" viewBox="0 0 24
 const PlusIcon = () => <svg role="img" height="24" width="24" viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg>;
 const HeartIcon = ({ filled, size = 16 }) => filled ? <svg role="img" height={size} width={size} viewBox="0 0 24 24"><path fill="currentColor" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> : <svg role="img" height={size} width={size} viewBox="0 0 24 24"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>;
 const PeopleIcon = () => <svg role="img" height="24" width="24" viewBox="0 0 24 24"><path fill="currentColor" d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path></svg>;
+const ChatIcon = () => <svg role="img" height="24" width="24" viewBox="0 0 24 24"><path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>;
+const SendIcon = () => <svg role="img" height="24" width="24" viewBox="0 0 24 24"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>;
 const LogoIcon = () => <svg role="img" height="40" width="40" viewBox="0 0 1134 1134"><path fill="#1ED760" d="M567 1134C253.86 1134 0 880.14 0 567S253.86 0 567 0s567 253.86 567 567-253.86 567-567 567zm254.5-317.9a26.73 26.73 0 0 1-38.16 2.08c-148.8-91.32-334.32-111.96-553.68-61.2a26.73 26.73 0 0 1-30.24-34.68c5.4-23.76 29.16-32.4 34.68-30.24 233.76 54 433.8-22.32 597.24-121.32a26.73 26.73 0 0 1 28.08 36.36zm55.8-150.3a33.42 33.42 0 0 1-47.52 2.64C720.66 601.86 493.5 577.8 290.1 631.5a33.42 33.42 0 0 1-37.8-42.36c6-26.52 36.36-35.4 42.36-37.8 219-58.8 466.56-31.08 658.92 84.48a33.42 33.42 0 0 1 2.52 47.64zm8.28-157.5c-204.6-69.24-540.36-61.92-758.28 22.44a39.33 39.33 0 1 1-28.92-70.56c245.16-91.8 610.92-80.28 849.36 1.8a39.33 39.33 0 0 1-31.32 68.64z"></path></svg>;
 
 // --- Helper Components ---
@@ -241,18 +267,11 @@ const SessionModal = ({ onClose, onSessionStart }) => {
     )
 };
 
-const ChatPanel = ({ messages, onSendMessage, sessionId }) => {
+const ChatPanel = ({ isVisible, messages, onSendMessage, sessionId, onEndSession, currentUser }) => {
     const [chatInput, setChatInput] = useState('');
     const messagesEndRef = useRef(null);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
+    const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    useEffect(scrollToBottom, [messages]);
     const handleSend = (e) => {
         e.preventDefault();
         if(chatInput.trim()){
@@ -260,28 +279,28 @@ const ChatPanel = ({ messages, onSendMessage, sessionId }) => {
             setChatInput('');
         }
     };
-
     return (
-        <div className="chat-panel">
-            <h3>Session: {sessionId}</h3>
+        <div className={`chat-panel ${isVisible ? 'visible' : ''}`}>
+            <div className="chat-header">
+                <h3>Session: {sessionId}</h3>
+                <button className="end-session-btn" onClick={onEndSession}>End Session</button>
+            </div>
             <div className="chat-messages">
                 {messages.map((msg, index) => (
-                    <div key={index} className={`chat-message ${msg.isSystem ? 'system' : ''}`}>
+                    <div key={index} className={`chat-message ${msg.isSystem ? 'system' : ''} ${msg.user === currentUser ? 'mine' : ''}`}>
                         {!msg.isSystem && <span className="user">{msg.user}</span>}
                         {msg.text}
                     </div>
                 ))}
                 <div ref={messagesEndRef} />
             </div>
-            <form className="chat-input" onSubmit={handleSend}>
+            <form className="chat-input-form" onSubmit={handleSend}>
                 <input type="text" placeholder="Say something..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} />
-                <button type="submit">Send</button>
+                <button type="submit"><SendIcon /></button>
             </form>
         </div>
     )
 };
-
-// ... (PlayerView component remains the same) ...
 const PlayerView = ({ track, albumTracks, isPlaying, progress, duration, onPlayPause, onSelectTrack, isFavorited, toggleFavorite, formatDuration }) => {
     const albumArt = track.artworkUrl100 ? track.artworkUrl100.replace('100x100', '600x600') : '';
     const releaseYear = new Date(track.releaseDate).getFullYear();
@@ -349,7 +368,7 @@ const PlayerView = ({ track, albumTracks, isPlaying, progress, duration, onPlayP
             </div>
         </div>
     )
-}
+};
 
 // --- Main App Component ---
 const socket = io("http://localhost:3001");
@@ -361,6 +380,7 @@ function App() {
 
   // Session state
   const [sessionId, setSessionId] = useState(null);
+  const [isChatVisible, setIsChatVisible] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -389,7 +409,7 @@ function App() {
     localStorage.removeItem('profile');
     setUser(null);
     setFavorites({});
-    if(sessionId) socket.emit('leave_session', sessionId);
+    if(sessionId) handleEndSession();
   };
   const apiFetch = async (url, options = {}) => {
     const profile = JSON.parse(localStorage.getItem('profile'));
@@ -458,6 +478,14 @@ function App() {
     socket.emit('join_session', newSessionId);
     setSessionId(newSessionId);
     setShowSessionModal(false);
+    setIsChatVisible(true);
+    setChatMessages([]);
+  };
+
+  const handleEndSession = () => {
+    // No need to emit leave_session, disconnecting is enough
+    setSessionId(null);
+    setIsChatVisible(false);
     setChatMessages([]);
   };
   
@@ -582,10 +610,19 @@ function App() {
 
         <main className="main-content">
           <header className="header">
-            <form className="search-form" onSubmit={handleSearchSubmit}>
-              <input type="text" placeholder="Search for Artists, Songs..." value={userInput} onChange={e => setUserInput(e.target.value)}/>
-            </form>
-            <div className="user-profile" onClick={handleSignOut}>Sign Out ({user.result.username})</div>
+            <div className="header-left">
+                <form className="search-form" onSubmit={handleSearchSubmit}>
+                    <input type="text" placeholder="Search for Artists, Songs..." value={userInput} onChange={e => setUserInput(e.target.value)}/>
+                </form>
+            </div>
+            <div className="header-right">
+                {sessionId && (
+                    <button className={`icon-button ${isChatVisible ? 'active' : ''}`} onClick={() => setIsChatVisible(!isChatVisible)} title="Toggle Chat">
+                        <ChatIcon />
+                    </button>
+                )}
+                <div className="user-profile" onClick={handleSignOut}>Sign Out ({user.result.username})</div>
+            </div>
           </header>
           
           {view === 'player' && currentTrack ? (
@@ -594,11 +631,11 @@ function App() {
             <>
                 <h2 className="view-title" style={{padding: '24px 32px'}}>{view === 'search' ? `Results for "${searchTerm}"` : 'Liked Songs'}</h2>
                 <div className="track-list-container" style={{padding: '0 32px'}}>
-                    {isLoading ? <div className="loader">Loading...</div> : 
+                    {isLoading ? <div>Loading...</div> : 
                     <ul className="track-list">
                         <li className="track-header"><div>#</div><div>Title</div><div>Album</div><div>Genre</div><div>Time</div></li>
                         {(view === 'favorites' ? Object.values(favorites) : tracks).map((track, index) => (
-                            <li key={`${track.trackId}-${index}`} className={`track-item ${currentTrack?.trackId === track.trackId && isPlaying ? 'playing' : ''}`}>
+                           <li key={`${track.trackId}-${index}`} className={`track-item ${currentTrack?.trackId === track.trackId && isPlaying ? 'playing' : ''}`}>
                                 <div className="track-number" onClick={() => handlePlayPause(track)}>
                                     <span className="index">{index + 1}</span>
                                     <button className="play-button">{currentTrack?.trackId === track.trackId && isPlaying ? <PauseIcon /> : <PlayIcon />}</button>
@@ -625,8 +662,16 @@ function App() {
                 </div>
             </>
           )}
-          {sessionId && <ChatPanel messages={chatMessages} onSendMessage={handleSendMessage} sessionId={sessionId} />}
         </main>
+        
+        <ChatPanel 
+            isVisible={isChatVisible} 
+            messages={chatMessages} 
+            onSendMessage={handleSendMessage} 
+            sessionId={sessionId} 
+            onEndSession={handleEndSession}
+            currentUser={user.result.username}
+        />
 
         {currentTrack && (
           <footer className="player-bar">
