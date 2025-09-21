@@ -285,6 +285,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-  <p><strong>Made with ❤️ by [Your Name]</strong></p>
+  <p><strong>Made with ❤️ by Eshwar Krishna Kancharlapalli</strong></p>
   <p>⭐ Star this repo if you found it helpful!</p>
 </div>
