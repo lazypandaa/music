@@ -9,7 +9,7 @@ const GlobalStyles = () => (
       --surface-color: #121212;
       --primary-text-color: #ffffff;
       --secondary-text-color: #b3b3b3;
-      --accent-color: #1DB954;
+      --accent-color: #E50914; /* Changed to red */
       --hover-color: #282828;
       --scrollbar-thumb-color: #5a5a5a;
     }
@@ -37,7 +37,7 @@ const GlobalStyles = () => (
       gap: 20px;
     }
     .logo {
-      color: var(--primary-text-color);
+      color: var(--accent-color); /* Changed to accent color */
       margin-bottom: 10px;
       font-weight: bold;
       font-size: 1.5rem;
@@ -123,7 +123,7 @@ const GlobalStyles = () => (
     }
     .modal-content .close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: white; font-size: 1.5rem; cursor:pointer; }
     .modal-content h2 { margin-bottom: 20px; }
-    .modal-form { display: flex; flex-direction: column; gap: 15px; }
+    .modal-form { display: flex; flex-direction: column, gap: 15px; }
     .modal-form input {
         padding: 12px; border: 1px solid #555; border-radius: 4px;
         background-color: var(--hover-color); color: white;
@@ -138,30 +138,46 @@ const GlobalStyles = () => (
     .modal-error { color: #ff4d4d; margin-top: 15px; font-size: 0.9rem; }
     
     /* Chat Panel Styles */
-    .chat-panel {
-      position: fixed;
-      top: 0; right: 0; bottom: 0;
-      width: 320px;
-      background-color: #000;
-      border-left: 1px solid #282828;
+    .chat-panel-float {
+      position: absolute;
       z-index: 150;
+      background-color: #181818;
+      border: 1px solid #282828;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      width: 340px;
+      height: 450px;
       display: flex;
       flex-direction: column;
-      transform: translateX(100%);
-      transition: transform 0.3s ease-in-out;
+      resize: both;
+      overflow: hidden;
+      min-width: 280px;
+      min-height: 200px;
     }
-    .chat-panel.visible {
-      transform: translateX(0);
+    .chat-panel-float.minimized {
+        height: 42px;
+        resize: none;
     }
     .chat-header {
-      padding: 16px;
-      border-bottom: 1px solid #282828;
+      background-color: #000;
+      padding: 8px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      cursor: move;
+      flex-shrink: 0;
     }
     .chat-header h3 { margin: 0; font-size: 1rem; }
-    .chat-header .end-session-btn { background: #333; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; }
+    .chat-header-controls { display: flex; gap: 8px; }
+    .chat-header-controls button { background: none; border: none; color: var(--secondary-text-color); cursor: pointer; }
+    .chat-header-controls button:hover { color: white; }
+    
+    .chat-body {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        overflow: hidden;
+    }
     .chat-messages {
       flex-grow: 1;
       overflow-y: auto;
@@ -176,18 +192,19 @@ const GlobalStyles = () => (
         border-radius: 12px;
         max-width: 90%;
         align-self: flex-start;
+        word-wrap: break-word;
     }
      .chat-message.mine {
         align-self: flex-end;
         background-color: var(--accent-color);
-        color: black;
+        color: white;
      }
     .chat-message.system { background: none; color: var(--secondary-text-color); font-style: italic; font-size: 0.8rem; align-self: center; }
     .chat-message .user { font-weight: bold; color: var(--accent-color); display: block; font-size: 0.8rem; }
-    .chat-message.mine .user { color: #111; }
+    .chat-message.mine .user { color: #fff; }
     .chat-input-form { display: flex; gap: 8px; padding: 16px; border-top: 1px solid #282828; }
     .chat-input-form input { flex-grow: 1; padding: 10px; border-radius: 20px; border: none; background-color: var(--hover-color); color: white; }
-    .chat-input-form button { background: none; border: none; color: var(--accent-color); cursor: pointer; }
+    .chat-input-form button { background: none; border: none; color: var(--accent-color); cursor: pointer; display: flex; align-items: center; justify-content: center; }
   `}</style>
 );
 // --- SVG Icons ---
@@ -201,19 +218,26 @@ const HeartIcon = ({ filled, size = 16 }) => filled ? <svg role="img" height={si
 const PeopleIcon = () => <svg role="img" height="24" width="24" viewBox="0 0 24 24"><path fill="currentColor" d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path></svg>;
 const ChatIcon = () => <svg role="img" height="24" width="24" viewBox="0 0 24 24"><path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"></path></svg>;
 const SendIcon = () => <svg role="img" height="24" width="24" viewBox="0 0 24 24"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>;
-const LogoIcon = () => <svg role="img" height="40" width="40" viewBox="0 0 1134 1134"><path fill="#1ED760" d="M567 1134C253.86 1134 0 880.14 0 567S253.86 0 567 0s567 253.86 567 567-253.86 567-567 567zm254.5-317.9a26.73 26.73 0 0 1-38.16 2.08c-148.8-91.32-334.32-111.96-553.68-61.2a26.73 26.73 0 0 1-30.24-34.68c5.4-23.76 29.16-32.4 34.68-30.24 233.76 54 433.8-22.32 597.24-121.32a26.73 26.73 0 0 1 28.08 36.36zm55.8-150.3a33.42 33.42 0 0 1-47.52 2.64C720.66 601.86 493.5 577.8 290.1 631.5a33.42 33.42 0 0 1-37.8-42.36c6-26.52 36.36-35.4 42.36-37.8 219-58.8 466.56-31.08 658.92 84.48a33.42 33.42 0 0 1 2.52 47.64zm8.28-157.5c-204.6-69.24-540.36-61.92-758.28 22.44a39.33 39.33 0 1 1-28.92-70.56c245.16-91.8 610.92-80.28 849.36 1.8a39.33 39.33 0 0 1-31.32 68.64z"></path></svg>;
+const CloseIcon = () => <svg role="img" height="18" width="18" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>;
+const MinimizeIcon = () => <svg role="img" height="18" width="18" viewBox="0 0 24 24"><path fill="currentColor" d="M19 13H5v-2h14v2z"></path></svg>;
+const MaximizeIcon = () => <svg role="img" height="18" width="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h18v2H3V3zm0 16h18v2H3v-2z"></path></svg>;
+const LogoIcon = () => <svg role="img" height="32" width="32" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>;
 
 // --- Helper Components ---
 const AuthModal = ({ onClose, onAuthSuccess }) => {
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [error, setError] = useState('');
+    
+    // Define API_URL within the component
+    const API_URL = `http://${window.location.hostname}:3002`;
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         const endpoint = isLogin ? '/api/auth/signin' : '/api/auth/signup';
         try {
-            const response = await fetch(`http://localhost:3001${endpoint}`, {
+            const response = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -267,11 +291,53 @@ const SessionModal = ({ onClose, onSessionStart }) => {
     )
 };
 
-const ChatPanel = ({ isVisible, messages, onSendMessage, sessionId, onEndSession, currentUser }) => {
+const ChatPanel = ({ messages, onSendMessage, sessionId, onEndSession, currentUser, onClose }) => {
     const [chatInput, setChatInput] = useState('');
+    const [isMinimized, setIsMinimized] = useState(false);
+    const [position, setPosition] = useState({ x: window.innerWidth - 360, y: 80 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    
     const messagesEndRef = useRef(null);
+    const chatPanelRef = useRef(null);
+    
     const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     useEffect(scrollToBottom, [messages]);
+    
+    const handleMouseDown = (e) => {
+        if (!chatPanelRef.current) return;
+        setIsDragging(true);
+        const panelRect = chatPanelRef.current.getBoundingClientRect();
+        setDragOffset({
+            x: e.clientX - panelRect.left,
+            y: e.clientY - panelRect.top,
+        });
+    };
+
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (!isDragging) return;
+            setPosition({
+                x: e.clientX - dragOffset.x,
+                y: e.clientY - dragOffset.y,
+            });
+        };
+
+        const handleMouseUp = () => {
+            setIsDragging(false);
+        };
+
+        if (isDragging) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging, dragOffset]);
+
     const handleSend = (e) => {
         e.preventDefault();
         if(chatInput.trim()){
@@ -280,24 +346,40 @@ const ChatPanel = ({ isVisible, messages, onSendMessage, sessionId, onEndSession
         }
     };
     return (
-        <div className={`chat-panel ${isVisible ? 'visible' : ''}`}>
-            <div className="chat-header">
+        <div 
+            ref={chatPanelRef}
+            className={`chat-panel-float ${isMinimized ? 'minimized' : ''}`}
+            style={{ top: `${position.y}px`, left: `${position.x}px` }}
+        >
+            <div className="chat-header" onMouseDown={handleMouseDown}>
                 <h3>Session: {sessionId}</h3>
-                <button className="end-session-btn" onClick={onEndSession}>End Session</button>
+                <div className="chat-header-controls">
+                    <button onClick={() => setIsMinimized(!isMinimized)}>
+                        {isMinimized ? <MaximizeIcon /> : <MinimizeIcon />}
+                    </button>
+                    <button onClick={onClose}><CloseIcon/></button>
+                </div>
             </div>
-            <div className="chat-messages">
-                {messages.map((msg, index) => (
-                    <div key={index} className={`chat-message ${msg.isSystem ? 'system' : ''} ${msg.user === currentUser ? 'mine' : ''}`}>
-                        {!msg.isSystem && <span className="user">{msg.user}</span>}
-                        {msg.text}
+            {!isMinimized && (
+                <div className="chat-body">
+                    <div className="chat-messages">
+                        {messages.map((msg, index) => (
+                            <div key={index} className={`chat-message ${msg.isSystem ? 'system' : ''} ${msg.user === currentUser ? 'mine' : ''}`}>
+                                {!msg.isSystem && <span className="user">{msg.user}</span>}
+                                {msg.text}
+                            </div>
+                        ))}
+                        <div ref={messagesEndRef} />
                     </div>
-                ))}
-                <div ref={messagesEndRef} />
-            </div>
-            <form className="chat-input-form" onSubmit={handleSend}>
-                <input type="text" placeholder="Say something..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} />
-                <button type="submit"><SendIcon /></button>
-            </form>
+                     <form className="chat-input-form" onSubmit={handleSend}>
+                        <input type="text" placeholder="Say something..." value={chatInput} onChange={(e) => setChatInput(e.target.value)} />
+                        <button type="submit"><SendIcon /></button>
+                    </form>
+                </div>
+            )}
+             <div className="chat-footer" style={{padding: '8px', textAlign: 'center'}}>
+                 <button className="end-session-btn" onClick={onEndSession} style={{width: 'calc(100% - 16px)'}}>End Session</button>
+             </div>
         </div>
     )
 };
@@ -371,7 +453,7 @@ const PlayerView = ({ track, albumTracks, isPlaying, progress, duration, onPlayP
 };
 
 // --- Main App Component ---
-const socket = io("http://localhost:3001");
+const socket = io(`http://${window.location.hostname}:3002`);
 
 function App() {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('profile')));
@@ -397,7 +479,7 @@ function App() {
   const [duration, setDuration] = useState(0);
   
   const audioRef = useRef(null);
-  const API_URL = 'http://localhost:3001';
+  const API_URL = `http://${window.location.hostname}:3002`;
 
   // --- Auth & API ---
   const handleAuthSuccess = (data) => {
@@ -453,16 +535,19 @@ function App() {
         }
 
         if (action === 'play') {
-            audioRef.current.currentTime = timestamp;
-            audioRef.current.play();
-            setIsPlaying(true);
+            if(audioRef.current) {
+                audioRef.current.currentTime = timestamp;
+                audioRef.current.play();
+                setIsPlaying(true);
+            }
         } else if (action === 'pause') {
-            audioRef.current.pause();
-            audioRef.current.currentTime = timestamp;
-            setIsPlaying(false);
+            if(audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = timestamp;
+                setIsPlaying(false);
+            }
         }
         
-        // Unset the flag after a short delay
         setTimeout(() => setIsSyncing(false), 100);
     });
 
@@ -483,7 +568,7 @@ function App() {
   };
 
   const handleEndSession = () => {
-    // No need to emit leave_session, disconnecting is enough
+    socket.emit('leave_session', sessionId);
     setSessionId(null);
     setIsChatVisible(false);
     setChatMessages([]);
@@ -664,14 +749,14 @@ function App() {
           )}
         </main>
         
-        <ChatPanel 
-            isVisible={isChatVisible} 
+        {isChatVisible && sessionId && <ChatPanel 
             messages={chatMessages} 
             onSendMessage={handleSendMessage} 
             sessionId={sessionId} 
             onEndSession={handleEndSession}
             currentUser={user.result.username}
-        />
+            onClose={() => setIsChatVisible(false)}
+        />}
 
         {currentTrack && (
           <footer className="player-bar">

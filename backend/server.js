@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -15,7 +16,7 @@ const io = new Server(server, {
   }
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001; // Changed from 3001 to 3002
 const JWT_SECRET = 'your-super-secret-key-that-should-be-in-env-vars';
 
 // --- Middleware ---
@@ -150,7 +151,7 @@ io.on('connection', (socket) => {
 
 
 // --- Start Server ---
-server.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => { // Also bind to all interfaces
+  console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });
 
