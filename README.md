@@ -261,14 +261,12 @@ We welcome contributions! Please follow these steps:
 - 🔄 Spotify/Apple Music integration
 - 📊 Listening statistics and analytics
 - 🎵 Enhanced audio controls (equalizer, effects)
-- 📱 Mobile app development
-- 🎮 Music games and social features
 
 ## 📞 Support & Contact
 
 - **Issues**: [GitHub Issues](https://github.com/yourusername/iplay-music-app/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/yourusername/iplay-music-app/discussions)
-- **Email**: your.email@example.com
+- **Email**: eswarlazypanda@gmail.com
 
 ## 📄 License
 
