@@ -7,7 +7,9 @@ const http = require('http');
 const { Server } = require("socket.io");
 
 // --- Hardcoded Configuration ---
-const FRONTEND_URL = "https://parassoni0.github.io/music";
+const GITHUB_PAGES_URL = "https://parassoni0.github.io/music";
+const CUSTOM_DOMAIN_HTTP = "http://eshwarkrishna.me";
+const CUSTOM_DOMAIN_HTTPS = "https://eshwarkrishna.me";
 const MONGO_URI = "mongodb+srv://test:703vr9FJwzKmfc4h@hack.8syianl.mongodb.net/hack";
 const JWT_SECRET = "your-super-secret-key-that-is-very-long-and-random";
 
@@ -15,7 +17,8 @@ const app = express();
 const server = http.createServer(app);
 
 // --- CORS Configuration ---
-const allowedOrigins = [FRONTEND_URL, 'http://localhost:5173'];
+// **MODIFIED**: Added your new custom domain to the list of allowed origins.
+const allowedOrigins = [GITHUB_PAGES_URL, CUSTOM_DOMAIN_HTTP, CUSTOM_DOMAIN_HTTPS, 'http://localhost:5173'];
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -34,11 +37,8 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3001;
 
 // --- Middleware ---
-// **IMPORTANT FIX**: This line explicitly handles the browser's security "preflight" check.
-// It must come BEFORE other middleware.
 app.options('*', cors(corsOptions)); 
-
-app.use(cors(corsOptions)); // Apply CORS to all other requests
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // --- MongoDB Connection ---
@@ -46,6 +46,7 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log("Successfully connected to MongoDB."))
   .catch(err => console.error("MongoDB connection error:", err));
 
+// ... (The rest of your server.js file remains exactly the same) ...
 // --- Mongoose Schemas ---
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, trim: true },
