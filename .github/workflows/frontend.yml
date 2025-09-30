@@ -50,3 +50,34 @@ jobs:
     # It assumes you are using a build tool like Vite or Create React App
     - name: Build
       run: npm run build --if-present
+
+    # This step uploads the build artifact for deployment
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v2
+      with:
+        # Upload the 'dist' directory from the 'frontend' folder
+        path: './frontend/dist'
+
+  # This new job handles the deployment to GitHub Pages
+  deploy:
+    # This job depends on the 'build' job finishing successfully
+    needs: build
+
+    # Permissions needed for the deployment job
+    permissions:
+      pages: write
+      id-token: write
+
+    # Specifies the deployment environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # This job will also run on the latest version of Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      # This is the deployment step
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+
