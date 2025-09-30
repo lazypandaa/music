@@ -230,7 +230,9 @@ const AuthModal = ({ onClose, onAuthSuccess }) => {
     const [error, setError] = useState('');
     
     // Define API_URL within the component
-    const API_URL = `http://${window.location.hostname}:3002`;
+    // const API_URL = `http://${window.location.hostname}:3002`;
+    const API_URL = `https://music-64ne.onrender.com`;
+  
     
     const handleSubmit = async (e) => {
         e.preventDefault();
