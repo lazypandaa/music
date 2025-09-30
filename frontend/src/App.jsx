@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from "socket.io-client";
 
+// --- DEFINE YOUR SINGLE SOURCE OF TRUTH FOR THE BACKEND URL ---
+const BACKEND_URL = "https://music-64ne.onrender.com";
+
 // --- STYLES ---
 const GlobalStyles = () => (
   <style>{`
@@ -37,7 +40,7 @@ const GlobalStyles = () => (
       gap: 20px;
     }
     .logo {
-      color: var(--accent-color); /* Changed to accent color */
+      color: var(--accent-color);
       margin-bottom: 10px;
       font-weight: bold;
       font-size: 1.5rem;
@@ -100,7 +103,6 @@ const GlobalStyles = () => (
     .player-track-info { display: flex; align-items: center; gap: 12px; cursor: pointer; }
     .player-controls { display: flex; justify-content: center; align-items: center; gap: 16px; }
     .control-button.play { background-color: var(--primary-text-color); color: #000; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-    /* Player View Styles */
     .player-view-container { padding: 24px 32px; }
     .player-view-header { display: flex; gap: 24px; align-items: flex-end; margin-bottom: 24px; }
     .player-view-album-art { width: 232px; height: 232px; min-width: 232px; border-radius: 8px; box-shadow: 0 4px 60px rgba(0,0,0,.5); }
@@ -110,8 +112,6 @@ const GlobalStyles = () => (
     .player-view-progress-container { width: 100%; max-width: 500px; display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--secondary-text-color); margin-top: -10px; }
     .player-view-progress-wrapper { flex-grow: 1; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; cursor: pointer; }
     .player-view-progress-bar { height: 100%; background: white; border-radius: 2px; width: 0%; }
-
-    /* Auth Modal & Session Modal Styles */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background-color: rgba(0, 0, 0, 0.7);
@@ -123,9 +123,9 @@ const GlobalStyles = () => (
     }
     .modal-content .close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: white; font-size: 1.5rem; cursor:pointer; }
     .modal-content h2 { margin-bottom: 20px; }
-    .modal-form { display: flex; flex-direction: column, gap: 15px; }
+    .modal-form { display: flex; flex-direction: column; gap: 15px; }
     .modal-form input {
-        padding: 12px; border: 1px solid #555; border-radius: 4px;
+        padding: 12px; margin-bottom: 15px; border: 1px solid #555; border-radius: 4px;
         background-color: var(--hover-color); color: white;
     }
     .modal-form button {
@@ -136,8 +136,6 @@ const GlobalStyles = () => (
     .modal-content .switch-auth { margin-top: 20px; color: var(--secondary-text-color); font-size: 0.9rem; }
     .modal-content .switch-auth span { color: white; cursor: pointer; text-decoration: underline; }
     .modal-error { color: #ff4d4d; margin-top: 15px; font-size: 0.9rem; }
-    
-    /* Chat Panel Styles */
     .chat-panel-float {
       position: absolute;
       z-index: 150;
@@ -171,7 +169,6 @@ const GlobalStyles = () => (
     .chat-header-controls { display: flex; gap: 8px; }
     .chat-header-controls button { background: none; border: none; color: var(--secondary-text-color); cursor: pointer; }
     .chat-header-controls button:hover { color: white; }
-    
     .chat-body {
         display: flex;
         flex-direction: column;
@@ -205,8 +202,14 @@ const GlobalStyles = () => (
     .chat-input-form { display: flex; gap: 8px; padding: 16px; border-top: 1px solid #282828; }
     .chat-input-form input { flex-grow: 1; padding: 10px; border-radius: 20px; border: none; background-color: var(--hover-color); color: white; }
     .chat-input-form button { background: none; border: none; color: var(--accent-color); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .end-session-btn {
+        padding: 8px; border: 1px solid var(--accent-color); border-radius: 50px; background-color: transparent;
+        color: var(--accent-color); font-weight: bold; cursor: pointer; transition: all 0.2s;
+    }
+    .end-session-btn:hover { background-color: var(--accent-color); color: white; }
   `}</style>
 );
+
 // --- SVG Icons ---
 const PlayIcon = () => (<svg role="img" height="24" width="24" viewBox="0 0 24 24"><path d="M7.05 3.606l13.49 7.788a.7.7 0 010 1.212L7.05 20.394A.7.7 0 016 19.788V4.212a.7.7 0 011.05-.606z"></path></svg>);
 const PauseIcon = () => (<svg role="img" height="24" width="24" viewBox="0 0 24 24"><path d="M5.7 3a.7.7 0 00-.7.7v16.6a.7.7 0 00.7.7h2.6a.7.7 0 00.7-.7V3.7a.7.7 0 00-.7-.7H5.7zm10 0a.7.7 0 00-.7.7v16.6a.7.7 0 00.7.7h2.6a.7.7 0 00.7-.7V3.7a.7.7 0 00-.7-.7h-2.6z"></path></svg>);
@@ -229,17 +232,12 @@ const AuthModal = ({ onClose, onAuthSuccess }) => {
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [error, setError] = useState('');
     
-    // Define API_URL within the component
-    // const API_URL = `http://${window.location.hostname}:3002`;
-    const API_URL = `https://music-64ne.onrender.com`;
-  
-    
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         const endpoint = isLogin ? '/api/auth/signin' : '/api/auth/signup';
         try {
-            const response = await fetch(`${API_URL}${endpoint}`, {
+            const response = await fetch(`${BACKEND_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -324,16 +322,13 @@ const ChatPanel = ({ messages, onSendMessage, sessionId, onEndSession, currentUs
                 y: e.clientY - dragOffset.y,
             });
         };
-
         const handleMouseUp = () => {
             setIsDragging(false);
         };
-
         if (isDragging) {
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('mouseup', handleMouseUp);
         }
-
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
@@ -380,11 +375,12 @@ const ChatPanel = ({ messages, onSendMessage, sessionId, onEndSession, currentUs
                 </div>
             )}
              <div className="chat-footer" style={{padding: '8px', textAlign: 'center'}}>
-                 <button className="end-session-btn" onClick={onEndSession} style={{width: 'calc(100% - 16px)'}}>End Session</button>
+                 <button className="end-session-btn" onClick={onEndSession}>End Session</button>
              </div>
         </div>
     )
 };
+
 const PlayerView = ({ track, albumTracks, isPlaying, progress, duration, onPlayPause, onSelectTrack, isFavorited, toggleFavorite, formatDuration }) => {
     const albumArt = track.artworkUrl100 ? track.artworkUrl100.replace('100x100', '600x600') : '';
     const releaseYear = new Date(track.releaseDate).getFullYear();
@@ -430,8 +426,8 @@ const PlayerView = ({ track, albumTracks, isPlaying, progress, duration, onPlayP
                         <div style={{textAlign: 'right'}}>Time</div>
                     </li>
                     {albumTracks.map((albumTrack, index) => {
-                         const isCurrent = track && track.trackId === albumTrack.trackId;
-                         return (
+                        const isCurrent = track && track.trackId === albumTrack.trackId;
+                        return (
                             <li key={albumTrack.trackId} className={`track-item ${isCurrent && isPlaying ? 'playing' : ''}`} style={{gridTemplateColumns: '40px 1fr 100px'}} onClick={() => onSelectTrack(albumTrack)}>
                                 <div className="track-number">
                                     <span className="index">{index + 1}</span>
@@ -446,7 +442,7 @@ const PlayerView = ({ track, albumTracks, isPlaying, progress, duration, onPlayP
                                 </div>
                                 <div className="track-duration" style={{textAlign: 'right'}}>{formatDuration(albumTrack.trackTimeMillis)}</div>
                             </li>
-                         )
+                        )
                     })}
                 </ul>
             </div>
@@ -455,19 +451,17 @@ const PlayerView = ({ track, albumTracks, isPlaying, progress, duration, onPlayP
 };
 
 // --- Main App Component ---
-const socket = io(`http://${window.location.hostname}:3002`);
+const socket = io(BACKEND_URL);
 
 function App() {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('profile')));
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(!JSON.parse(localStorage.getItem('profile')));
   const [showSessionModal, setShowSessionModal] = useState(false);
 
-  // Session state
   const [sessionId, setSessionId] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [isSyncing, setIsSyncing] = useState(false);
-
   const [searchTerm, setSearchTerm] = useState("Top Hits");
   const [tracks, setTracks] = useState([]);
   const [favorites, setFavorites] = useState({});
@@ -481,34 +475,44 @@ function App() {
   const [duration, setDuration] = useState(0);
   
   const audioRef = useRef(null);
-  const API_URL = `http://${window.location.hostname}:3002`;
 
-  // --- Auth & API ---
   const handleAuthSuccess = (data) => {
     localStorage.setItem('profile', JSON.stringify(data));
     setUser(data);
     setShowAuthModal(false);
   };
+
   const handleSignOut = () => {
     localStorage.removeItem('profile');
     setUser(null);
     setFavorites({});
     if(sessionId) handleEndSession();
+    setShowAuthModal(true); // Show login modal on signout
   };
+
   const apiFetch = async (url, options = {}) => {
     const profile = JSON.parse(localStorage.getItem('profile'));
     const token = profile?.token;
     const headers = { ...options.headers, 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
     const response = await fetch(url, { ...options, headers });
-    if (response.status === 401) { handleSignOut(); throw new Error('Session expired.'); }
+    if (response.status === 401) { 
+        handleSignOut(); 
+        throw new Error('Session expired. Please sign in again.'); 
+    }
     return response;
   };
+
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+        setShowAuthModal(true);
+        return;
+    };
+
     const fetchFavorites = async () => {
         try {
-            const response = await apiFetch(`${API_URL}/api/favorites`);
+            const response = await apiFetch(`${BACKEND_URL}/api/favorites`);
+            if (!response.ok) return;
             const favTracks = await response.json();
             setFavorites(favTracks.reduce((acc, t) => ({...acc, [t.trackId]: t}), {}));
         } catch (error) { console.error("Failed to fetch favorites:", error); }
@@ -516,30 +520,24 @@ function App() {
     fetchFavorites();
   }, [user]);
 
-  // --- Socket.io Handlers ---
   useEffect(() => {
     socket.on('connect', () => console.log('Connected to socket server.'));
-    
-    socket.on('new_message', (message) => {
-        setChatMessages((prev) => [...prev, message]);
-    });
-    
-    socket.on('user_joined', (message) => {
-        setChatMessages((prev) => [...prev, {...message, isSystem: true}]);
-    });
+    socket.on('disconnect', () => console.log('Disconnected from socket server.'));
+    socket.on('new_message', (message) => setChatMessages((prev) => [...prev, message]));
+    socket.on('user_joined', (message) => setChatMessages((prev) => [...prev, {...message, isSystem: true}]));
 
     socket.on('update_playback', (data) => {
-        setIsSyncing(true); // Prevent sending our own event back
+        setIsSyncing(true);
         const { action, track, timestamp } = data;
 
         if (track && currentTrack?.trackId !== track.trackId) {
-            handlePlayPause(track, true); // Play the new track received from host
+            handlePlayPause(track, true);
         }
 
         if (action === 'play') {
             if(audioRef.current) {
                 audioRef.current.currentTime = timestamp;
-                audioRef.current.play();
+                audioRef.current.play().catch(e => console.error("Sync play error:", e));
                 setIsPlaying(true);
             }
         } else if (action === 'pause') {
@@ -550,11 +548,12 @@ function App() {
             }
         }
         
-        setTimeout(() => setIsSyncing(false), 100);
+        setTimeout(() => setIsSyncing(false), 200);
     });
 
     return () => {
       socket.off('connect');
+      socket.off('disconnect');
       socket.off('new_message');
       socket.off('update_playback');
       socket.off('user_joined');
@@ -577,10 +576,10 @@ function App() {
   };
   
   const handleSendMessage = (text) => {
+    if (!user) return;
     socket.emit('chat_message', { sessionId, user: user.result.username, text });
   };
   
-  // --- Music Fetching & Playback ---
   useEffect(() => {
     const fetchInitialTracks = async () => {
       if (!searchTerm) return; 
@@ -607,32 +606,41 @@ function App() {
     if (currentTrack && currentTrack.trackId === track.trackId) {
       if (isPlaying) {
           audioRef.current.pause();
-          if (sessionId && !fromSocket) socket.emit('playback_control', { sessionId, action: 'pause', timestamp: audioRef.current.currentTime });
+          if (sessionId && !isSyncing && !fromSocket) socket.emit('playback_control', { sessionId, action: 'pause', timestamp: audioRef.current.currentTime });
       } else {
-          audioRef.current.play();
-          if (sessionId && !fromSocket) socket.emit('playback_control', { sessionId, action: 'play', timestamp: audioRef.current.currentTime });
+          audioRef.current.play().catch(e => console.error("Play error:", e));
+          if (sessionId && !isSyncing && !fromSocket) socket.emit('playback_control', { sessionId, action: 'play', timestamp: audioRef.current.currentTime });
       }
       setIsPlaying(!isPlaying);
     } else {
       if (audioRef.current) audioRef.current.pause();
+      
       const newAudio = new Audio(track.previewUrl);
+      newAudio.crossOrigin = "anonymous";
+      
       setCurrentTrack(track);
       if (track.collectionId) fetchAlbumTracks(track.collectionId);
       setView('player');
       audioRef.current = newAudio;
       
-      newAudio.play().catch(e => console.error("Error playing audio:", e));
+      newAudio.play().catch(e => console.error("Error playing new audio:", e));
       setIsPlaying(true);
-      if (sessionId && !fromSocket) socket.emit('playback_control', { sessionId, action: 'play', track, timestamp: 0 });
+      
+      if (sessionId && !isSyncing && !fromSocket) {
+        socket.emit('playback_control', { sessionId, action: 'play', track, timestamp: 0 });
+      }
       
       newAudio.onloadedmetadata = () => setDuration(newAudio.duration);
       newAudio.ontimeupdate = () => setProgress(newAudio.currentTime);
-      newAudio.onended = () => setIsPlaying(false);
+      newAudio.onended = () => {
+        setIsPlaying(false);
+        setProgress(0);
+      };
     }
   };
 
   const handlePlayerPlayPause = () => {
-    if (!currentTrack || isSyncing) return;
+    if (!currentTrack) return;
     handlePlayPause(currentTrack);
   };
  
@@ -641,13 +649,18 @@ function App() {
     const isFavorited = !!favorites[track.trackId];
     const newFavorites = { ...favorites };
     const method = isFavorited ? 'DELETE' : 'POST';
-    const endpoint = isFavorited ? `${API_URL}/api/favorites/${track.trackId}` : `${API_URL}/api/favorites`;
+    const endpoint = isFavorited ? `${BACKEND_URL}/api/favorites/${track.trackId}` : `${BACKEND_URL}/api/favorites`;
 
-    if (isFavorited) delete newFavorites[track.trackId]; else newFavorites[track.trackId] = track;
+    if (isFavorited) {
+        delete newFavorites[track.trackId];
+    } else {
+        newFavorites[track.trackId] = track;
+    }
     setFavorites(newFavorites);
     
     try {
-        await apiFetch(endpoint, { method, body: isFavorited ? null : JSON.stringify({ track }) });
+        const body = method === 'POST' ? JSON.stringify({ track }) : null;
+        await apiFetch(endpoint, { method, body });
     } catch (error) {
         console.error(`Failed to update favorite:`, error);
         setFavorites(favorites); // Revert on failure
@@ -667,13 +680,18 @@ function App() {
   };
   
   if (!user) {
-    return ( <> <GlobalStyles/> <AuthModal onClose={() => {}} onAuthSuccess={handleAuthSuccess} /> </> );
+    // MODIFIED: This logic is simplified to always show the modal if not logged in.
+    return (
+        <>
+            <GlobalStyles/>
+            <AuthModal onClose={() => { /* Cannot close if not logged in */ }} onAuthSuccess={handleAuthSuccess} />
+        </>
+    );
   }
 
   return (
     <>
       <GlobalStyles />
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onAuthSuccess={handleAuthSuccess} />}
       {showSessionModal && <SessionModal onClose={() => setShowSessionModal(false)} onSessionStart={handleSessionStart} />}
       <div className="music-player-app">
         <aside className="sidebar">
@@ -687,9 +705,9 @@ function App() {
           </div>
           <div>
              <ul className="nav-group">
-                 <li className="nav-item"><PlusIcon /> Create Playlist</li>
-                 <li className={`nav-item ${view === 'favorites' ? 'active' : ''}`} onClick={() => setView('favorites')}><HeartIcon filled={true} /> Liked Songs</li>
-                 <li className="nav-item" onClick={() => setShowSessionModal(true)}><PeopleIcon /> Listen Together</li>
+                  <li className="nav-item"><PlusIcon /> Create Playlist</li>
+                  <li className={`nav-item ${view === 'favorites' ? 'active' : ''}`} onClick={() => setView('favorites')}><HeartIcon filled={true} /> Liked Songs</li>
+                  <li className="nav-item" onClick={() => setShowSessionModal(true)}><PeopleIcon /> Listen Together</li>
              </ul>
              <hr />
           </div>
@@ -708,7 +726,8 @@ function App() {
                         <ChatIcon />
                     </button>
                 )}
-                <div className="user-profile" onClick={handleSignOut}>Sign Out ({user.result.username})</div>
+                {/* MODIFIED: Make sure user.result exists before trying to access username */}
+                <div className="user-profile" onClick={handleSignOut}>Sign Out ({user?.result?.username})</div>
             </div>
           </header>
           
@@ -716,7 +735,7 @@ function App() {
             <PlayerView track={currentTrack} albumTracks={currentAlbumTracks} isPlaying={isPlaying} progress={progress} duration={duration} onPlayPause={handlePlayerPlayPause} onSelectTrack={handlePlayPause} isFavorited={!!favorites[currentTrack.trackId]} toggleFavorite={toggleFavorite} formatDuration={formatDuration} />
           ) : (
             <>
-                <h2 className="view-title" style={{padding: '24px 32px'}}>{view === 'search' ? `Results for "${searchTerm}"` : 'Liked Songs'}</h2>
+                <h2 className="view-title" style={{padding: '24px 32px'}}>{view === 'favorites' ? 'Liked Songs' : `Results for "${searchTerm}"`}</h2>
                 <div className="track-list-container" style={{padding: '0 32px'}}>
                     {isLoading ? <div>Loading...</div> : 
                     <ul className="track-list">
@@ -756,7 +775,7 @@ function App() {
             onSendMessage={handleSendMessage} 
             sessionId={sessionId} 
             onEndSession={handleEndSession}
-            currentUser={user.result.username}
+            currentUser={user?.result?.username}
             onClose={() => setIsChatVisible(false)}
         />}
 
