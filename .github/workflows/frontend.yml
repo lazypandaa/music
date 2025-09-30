@@ -25,12 +25,12 @@ jobs:
         node-version: [18.x]
 
     steps:
-    # This step checks out your repository code
-    - uses: actions/checkout@v3
+    # This step checks out your repository code, updated to v4
+    - uses: actions/checkout@v4
 
-    # This step sets up Node.js with the specified version
+    # This step sets up Node.js with the specified version, updated to v4
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
@@ -51,9 +51,9 @@ jobs:
     - name: Build
       run: npm run build --if-present
 
-    # This step uploads the build artifact for deployment
+    # This step uploads the build artifact for deployment, updated to v3
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v2
+      uses: actions/upload-pages-artifact@v3
       with:
         # Upload the 'dist' directory from the 'frontend' folder
         path: './frontend/dist'
@@ -76,11 +76,8 @@ jobs:
     # This job will also run on the latest version of Ubuntu
     runs-on: ubuntu-latest
     steps:
-      # This is the deployment step
+      # This is the deployment step, updated to v4
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
-
-
-# ..
+        uses: actions/deploy-pages@v4
 
